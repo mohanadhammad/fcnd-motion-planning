@@ -132,6 +132,7 @@ class MotionPlanning(Drone):
 
         # TODO: retrieve current global position
         global_position = self.global_position
+        # global_position = np.array([self._longitude, self._latitude, self._altitude])
 
         # TODO: convert to current local position using global_to_local()
         north_local, east_local, _ = global_to_local(global_position, self.global_home)

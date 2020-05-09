@@ -12,32 +12,22 @@
 5. Use a collinearity test or ray tracing method (like Bresenham) to remove unnecessary waypoints.
 6. Return waypoints in local ECEF coordinates (format for `self.all_waypoints` is [N, E, altitude, heading], where the drone’s start location corresponds to [0, 0, 0, 0].
 7. Write it up.
-8. Congratulations!  Your Done!
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/1534/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
-### Writeup / README
-
-#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  
-
-You're reading it! Below I describe how I addressed each rubric point and where in my code each point is handled.
 
 ### Explain the Starter Code
 
 #### 1. Explain the functionality of what's provided in `motion_planning.py` and `planning_utils.py`
-These scripts contain a basic planning implementation that includes...
+These scripts contain a basic planning implementation that includes A* path planning algorithm to find path from the drone starting point to a goal position assigned in the grid map. The grid map is loaded from `colliders.csv` file and from this file the initial poistion is retrived as well as the geodetic location of all obstacles in the grid map.
 
-And here's a lovely image of my results (ok this image has nothing to do with it, but it's a nice example of how to include images in your writeup!)
-![Top Down View](./misc/high_up.png)
+The possible actions provided in the planning algorithm are **[south, north, east, west, north_east, north_west, south_east, south_west]**. Such that the diagonal actions are given slightly higher cost than the orthogonal ones.
 
-Here's | A | Snappy | Table
---- | --- | --- | ---
-1 | `highlight` | **bold** | 7.41
-2 | a | b | c
-3 | *italic* | text | 403
-4 | 2 | 3 | abcd
+After finding the path connecting start and goal position, a colinearity test is executed on the whole path to eliminate unnecessary points which belongs to straight line motion in order to minimize the number of waypoints in the path.
+
+![pruned_path](images/Figure_3.png)
 
 ### Implementing Your Path Planning Algorithm
 
@@ -50,9 +40,6 @@ with open('colliders.csv', 'r') as csv_file:
 lat0 = float(data[0].split()[1])
 lon0 = float(data[1].split()[1])
 ```
-
-And here is a picture of downtown San Francisco environment from above!
-![Map of SF](./misc/map.png)
 
 #### 2. Setting current local position
 Here as long as you successfully determine your local position relative to global home you'll be all set. Explain briefly how you accomplished this in your code.
