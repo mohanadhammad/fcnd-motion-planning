@@ -1,11 +1,13 @@
 import argparse
 import time
+import csv
 import msgpack
 from enum import Enum, auto
 
 import numpy as np
+import matplotlib.pyplot as plt
 
-from planning_utils import a_star, heuristic, create_grid
+from planning_utils import a_star, heuristic, create_grid, prune_path, visualize_path
 from udacidrone import Drone
 from udacidrone.connection import MavlinkConnection
 from udacidrone.messaging import MsgID
@@ -120,14 +122,21 @@ class MotionPlanning(Drone):
         self.target_position[2] = TARGET_ALTITUDE
 
         # TODO: read lat0, lon0 from colliders into floating point values
-        
+        with open('colliders.csv', 'r') as csv_file:
+            data = list(csv.reader(csv_file))[0]
+        lat0 = float(data[0].split()[1])
+        lon0 = float(data[1].split()[1])
+
         # TODO: set home position to (lon0, lat0, 0)
+        self.set_home_position(lon0, lat0, 0)
 
         # TODO: retrieve current global position
- 
+        global_position = self.global_position
+
         # TODO: convert to current local position using global_to_local()
-        
-        print('global home {0}, position {1}, local position {2}'.format(self.global_home, self.global_position,
+        north_local, east_local, _ = global_to_local(global_position, self.global_home)
+
+        print('global home {0}, position {1}, local position {2}'.format(self.global_home, global_position,
                                                                          self.local_position))
         # Read in obstacle map
         data = np.loadtxt('colliders.csv', delimiter=',', dtype='Float64', skiprows=2)
@@ -135,24 +144,41 @@ class MotionPlanning(Drone):
         # Define a grid for a particular altitude and safety margin around obstacles
         grid, north_offset, east_offset = create_grid(data, TARGET_ALTITUDE, SAFETY_DISTANCE)
         print("North offset = {0}, east offset = {1}".format(north_offset, east_offset))
+        
         # Define starting point on the grid (this is just grid center)
-        grid_start = (-north_offset, -east_offset)
         # TODO: convert start position to current position rather than map center
+        grid_start_north = np.ceil(north_local - north_offset)
+        grid_start_east = np.ceil(east_local - east_offset)
+        grid_start = (int(grid_start_north), int(grid_start_east))
         
         # Set goal as some arbitrary position on the grid
-        grid_goal = (-north_offset + 10, -east_offset + 10)
+        # to get the goad value I had to drove manually to any location and pick from
+        # the simulator the goal values.
+        # self.global_goal_position = np.array([-122.399243, 37.794801, 5.], dtype='Float64')
+        self.global_goal_position = np.array([-122.398248, 37.796342, 5.], dtype='Float64')
+
         # TODO: adapt to set goal as latitude / longitude position and convert
+        local_goal_north, local_goal_east, _ = global_to_local(self.global_goal_position, self.global_home)
+        
+        grid_goal_north = np.ceil(local_goal_north - north_offset)
+        grid_goal_east = np.ceil(local_goal_east - east_offset)
+        grid_goal = (int(grid_goal_north), int(grid_goal_east))
 
         # Run A* to find a path from start to goal
         # TODO: add diagonal motions with a cost of sqrt(2) to your A* implementation
         # or move to a different search space such as a graph (not done here)
         print('Local Start and Goal: ', grid_start, grid_goal)
         path, _ = a_star(grid, heuristic, grid_start, grid_goal)
+        
+        #visualize_path(plt, grid, path, grid_start)
+
         # TODO: prune path to minimize number of waypoints
+        pruned_path = prune_path(path)
+
         # TODO (if you're feeling ambitious): Try a different approach altogether!
 
         # Convert path to waypoints
-        waypoints = [[p[0] + north_offset, p[1] + east_offset, TARGET_ALTITUDE, 0] for p in path]
+        waypoints = [[p[0] + north_offset, p[1] + east_offset, TARGET_ALTITUDE, 0] for p in pruned_path]
         # Set self.waypoints
         self.waypoints = waypoints
         # TODO: send waypoints to sim (this is just for visualization of waypoints)

@@ -51,10 +51,14 @@ class Action(Enum):
     is the cost of performing the action.
     """
 
-    WEST = (0, -1, 1)
-    EAST = (0, 1, 1)
-    NORTH = (-1, 0, 1)
-    SOUTH = (1, 0, 1)
+    WEST = (0, -1, np.sqrt(2))
+    EAST = (0, 1, np.sqrt(2))
+    NORTH = (-1, 0, np.sqrt(2))
+    SOUTH = (1, 0, np.sqrt(2))
+    NORTH_WEST = (-1, -1, np.sqrt(2))
+    NORTH_EAST = (-1,  1, np.sqrt(2))
+    SOUTH_WEST = (1, -1, np.sqrt(2))
+    SOUTH_EAST = (1,  1, np.sqrt(2))
 
     @property
     def cost(self):
@@ -84,6 +88,15 @@ def valid_actions(grid, current_node):
         valid_actions.remove(Action.WEST)
     if y + 1 > m or grid[x, y + 1] == 1:
         valid_actions.remove(Action.EAST)
+
+    if x - 1 < 0 or y - 1 < 0 or grid[x - 1, y - 1] == 1:   # NORTH_WEST = (-1, -1, np.sqrt(2))
+        valid_actions.remove(Action.NORTH_WEST)
+    if x - 1 < 0 or y + 1 > m or grid[x - 1, y + 1] == 1:   # NORTH_EAST = (-1,  1, np.sqrt(2))
+        valid_actions.remove(Action.NORTH_EAST)
+    if x + 1 > n or y - 1 < 0 or grid[x + 1, y - 1] == 1:   # SOUTH_WEST = (1, -1, np.sqrt(2))
+        valid_actions.remove(Action.SOUTH_WEST)
+    if x + 1 > n or y + 1 > m or grid[x + 1, y + 1] == 1:   # SOUTH_EAST = (1,  1, np.sqrt(2))
+        valid_actions.remove(Action.SOUTH_EAST) 
 
     return valid_actions
 
@@ -144,3 +157,50 @@ def a_star(grid, h, start, goal):
 def heuristic(position, goal_position):
     return np.linalg.norm(np.array(position) - np.array(goal_position))
 
+def point(p):
+    return np.array([p[0], p[1], 1.])
+
+def check_collinearity(p1, p2, p3, epsilon):
+    collinear = False
+
+    M = np.array([point(p1), point(p2), point(p3)])
+    det = np.linalg.det(M)
+
+    if np.abs(det) < epsilon:
+        collinear = True
+    
+    return collinear
+
+def prune_path(path, epsilon=1e-5):
+    pruned_path = []
+    for p in path:
+        pruned_path.append(p)
+
+    index = 0
+
+    while index < len(pruned_path)-2:
+        p1 = pruned_path[index]
+        p2 = pruned_path[index+1]
+        p3 = pruned_path[index+2]
+
+        collinear = check_collinearity(p1, p2, p3, epsilon)
+
+        if collinear:
+            pruned_path.remove(p2)
+        else:
+            index += 1
+
+    return pruned_path
+
+def visualize_path(plt, grid, path, start):
+    plt.imshow(grid, origin='lower', cmap='Greys')
+
+    for i in range(len(path)-1):
+        p1 = path[i]
+        p2 = path[i+1]
+        plt.plot([p1[1], p2[1]], [p1[0], p2[0]], 'r-')
+
+    plt.xlabel('EAST')
+    plt.ylabel('NORTH')
+    plt.show()
+    
