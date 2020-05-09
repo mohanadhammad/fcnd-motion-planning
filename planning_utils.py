@@ -51,10 +51,10 @@ class Action(Enum):
     is the cost of performing the action.
     """
 
-    WEST = (0, -1, np.sqrt(2))
-    EAST = (0, 1, np.sqrt(2))
-    NORTH = (-1, 0, np.sqrt(2))
-    SOUTH = (1, 0, np.sqrt(2))
+    WEST = (0, -1, 1)
+    EAST = (0, 1, 1)
+    NORTH = (-1, 0, 1)
+    SOUTH = (1, 0, 1)
     NORTH_WEST = (-1, -1, np.sqrt(2))
     NORTH_EAST = (-1,  1, np.sqrt(2))
     SOUTH_WEST = (1, -1, np.sqrt(2))
@@ -172,10 +172,10 @@ def check_collinearity(p1, p2, p3, epsilon):
     return collinear
 
 def prune_path(path, epsilon=1e-5):
-    pruned_path = []
-    for p in path:
-        pruned_path.append(p)
-
+    # pruned_path = []
+    # for p in path:
+    #     pruned_path.append(p)
+    pruned_path = [p for p in path]
     index = 0
 
     while index < len(pruned_path)-2:
@@ -186,19 +186,22 @@ def prune_path(path, epsilon=1e-5):
         collinear = check_collinearity(p1, p2, p3, epsilon)
 
         if collinear:
-            pruned_path.remove(p2)
+            pruned_path.remove(pruned_path[index+1])
         else:
             index += 1
 
     return pruned_path
 
-def visualize_path(plt, grid, path, start):
+def visualize_path(plt, grid, path, start, goal):
     plt.imshow(grid, origin='lower', cmap='Greys')
 
     for i in range(len(path)-1):
         p1 = path[i]
         p2 = path[i+1]
         plt.plot([p1[1], p2[1]], [p1[0], p2[0]], 'r-')
+
+    plt.plot(start[1], start[0], 'gx')
+    plt.plot(goal[1], goal[0], 'bx')
 
     plt.xlabel('EAST')
     plt.ylabel('NORTH')

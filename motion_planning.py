@@ -155,7 +155,8 @@ class MotionPlanning(Drone):
         # to get the goad value I had to drove manually to any location and pick from
         # the simulator the goal values.
         # self.global_goal_position = np.array([-122.399243, 37.794801, 5.], dtype='Float64')
-        self.global_goal_position = np.array([-122.398248, 37.796342, 5.], dtype='Float64')
+        # self.global_goal_position = np.array([-122.394275, 37.793462, 5.], dtype='Float64')
+        self.global_goal_position = np.array([-122.399684, 37.796983, 5.], dtype='Float64')
 
         # TODO: adapt to set goal as latitude / longitude position and convert
         local_goal_north, local_goal_east, _ = global_to_local(self.global_goal_position, self.global_home)
@@ -169,11 +170,12 @@ class MotionPlanning(Drone):
         # or move to a different search space such as a graph (not done here)
         print('Local Start and Goal: ', grid_start, grid_goal)
         path, _ = a_star(grid, heuristic, grid_start, grid_goal)
-        
-        #visualize_path(plt, grid, path, grid_start)
+
+        # visualize_path(plt, grid, path, grid_start, grid_goal)
 
         # TODO: prune path to minimize number of waypoints
         pruned_path = prune_path(path)
+        # visualize_path(plt, grid, pruned_path, grid_start, grid_goal)
 
         # TODO (if you're feeling ambitious): Try a different approach altogether!
 
